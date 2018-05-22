@@ -9,16 +9,30 @@ Facter.add(:kmods) do
       next if directory == '.' or directory == '..'
 
       kmod[directory] = {
-        :parameters => {},
-        :used_by => [],
+        'parameters' => {},
+        'used_by' => [],
       }
 
-      Dir.glob("/sys/module/#{directory}/parameters/*") do |param|
-        kmod[directory][:parameters][param] = File.read("/sys/module/#{directory}/parameters/#{param}", 'r')
+      if File.directory?("/sys/module/#{directory}/parameters")
+        begin
+          Dir.foreach("/sys/module/#{directory}/parameters") do |param|
+            next if param == '.' or param == '..'
+            kmod[directory]['parameters'][param] = File.read("/sys/module/#{directory}/parameters/#{param}").chomp
+          end
+        rescue => e
+          puts e
+        end
       end
 
-      Dir.glob("/sys/module/#{directory}/holders/*") do |used|
-        kmod[directory][:used_by] << used
+      if File.directory?("/sys/module/#{directory}/holders")
+        begin
+          Dir.foreach("/sys/module/#{directory}/holders") do |used|
+            next if used == '.' or used == '..'
+            kmod[directory]['used_by'] << used
+          end
+        rescue => e
+          puts e
+        end
       end
 
     end
